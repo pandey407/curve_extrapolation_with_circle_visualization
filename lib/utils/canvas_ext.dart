@@ -33,7 +33,7 @@ extension CanvasXDrawNonOverlapCircles on Canvas {
           final lastCircle = (lastNode - interpolatedCenter);
           final lastOverlaps = lastCircle.distance <= radius;
           if (lastOverlaps) {
-            Offset tangent = lastNode - interpolatedCenter;
+            Offset tangent = lastNode - drawnPositions.last;
             if (tangent.distance != 0) {
               tangent = tangent / tangent.distance;
             }
