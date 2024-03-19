@@ -32,6 +32,7 @@ class _CurveExtrapolationVisualizationState
     extends State<CurveExtrapolationVisualization>
     with SingleTickerProviderStateMixin {
   late List<Node> nodes;
+  List<Offset> proofPositions = [];
   int selectedNodeIndex = 0;
 
   late AnimationController _proofBallAnimationController;
@@ -109,6 +110,10 @@ class _CurveExtrapolationVisualizationState
                         });
                       },
                       proofBallAnimation: _proofBallAnimation,
+                      pointsOnCurve: proofPositions,
+                      proofPositionUpdate: (pos) {
+                        proofPositions.add(pos);
+                      },
                     ),
                   ),
                 ),
@@ -119,10 +124,12 @@ class _CurveExtrapolationVisualizationState
               child: Wrap(
                 children: [
                   OutlinedButton(
-                    onPressed: () {
-                      if (_proofBallAnimationController.isAnimating) return;
-                      _proofBallAnimationController.forward();
-                    },
+                    onPressed: _proofBallAnimationController.isAnimating
+                        ? null
+                        : () {
+                            proofPositions.clear();
+                            _proofBallAnimationController.forward();
+                          },
                     child: const Text("Animate Proof Ball"),
                   )
                 ],
