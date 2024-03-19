@@ -1,5 +1,6 @@
 import 'package:curve_extrapolation_with_circle_visualization/node/node.dart';
 import 'package:flutter/material.dart';
+import 'package:proste_bezier_curve/proste_bezier_curve.dart';
 import 'package:touchable/touchable.dart';
 
 class BeizerSplinePainter extends CustomPainter {
@@ -27,6 +28,12 @@ class BeizerSplinePainter extends CustomPainter {
       ..color = Colors.white
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
+    var curve = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0
+      ..blendMode = BlendMode.screen
+      ..strokeCap = StrokeCap.round;
 
     canvas.drawRect(rect, boundingBox);
 
@@ -60,32 +67,57 @@ class BeizerSplinePainter extends CustomPainter {
     }
     final (px1, px2) = computeControlPoints(x);
     final (py1, py2) = computeControlPoints(y);
+    var path = Path();
+    path.moveTo(nodes.first.position.dx, nodes.first.position.dy);
+    for (int i = 0; i < nodes.length - 1; i++) {
+      ThirdOrderBezierCurveSection param = ThirdOrderBezierCurveSection(
+        smooth: 0,
+        p1: Offset(x[i], y[i]),
+        p2: Offset(px1[i], py1[i]),
+        p3: Offset(px2[i], py2[i]),
+        p4: Offset(x[i + 1], y[i + 1]),
+      );
+      ThirdOrderBezierCurveDots dots =
+          ProsteThirdOrderBezierCurve.calcCurveDots(param);
 
-    canvas.drawCircle(Offset(px1[0], py1[0]), 3, Paint()..color = Colors.red);
-    canvas.drawCircle(Offset(px2[0], py2[0]), 3, Paint()..color = Colors.red);
+      path.cubicTo(dots.x1, dots.y1, dots.x2, dots.y2, dots.x3, dots.y3);
+    }
+    canvas.drawPath(path, curve);
   }
 
   @override
   bool shouldRepaint(BeizerSplinePainter oldDelegate) => true;
 
-  // Function to compute control points for a spline section
+  // Function to compute control points for a spline given a list of points
   (List<double>, List<double>) computeControlPoints(List<double> points) {
+    // Determine the number of points
     final n = points.length - 1;
+
     // Initialize lists for control points
-    final p1 = List<double>.filled(n, 0.0);
-    final p2 = List<double>.filled(n, 0.0);
-
+    List<double> p1 = List<double>.filled(n, 0.0);
+    List<double> p2 = List<double>.filled(n, 0.0);
     // Initialize coefficient arrays for the tridiagonal matrix algorithm
-    final a = List<double>.filled(n, 1.0);
-    final b = List<double>.filled(n, 4.0);
-    final c = List<double>.filled(n, 1.0);
-    final r = List<double>.filled(n, 0.0);
+    List<double> a = List<double>.filled(n, 0.0);
+    List<double> b = List<double>.filled(n, 0.0);
+    List<double> c = List<double>.filled(n, 0.0);
+    List<double> r = List<double>.filled(n, 0.0);
 
-    // Compute the r values based on the input points
+    // Set up the edge conditions
+    a[0] = 0;
+    b[0] = 2;
+    c[0] = 1;
     r[0] = points[0] + 2 * points[1];
+
     for (int i = 1; i < n - 1; i++) {
+      a[i] = 1;
+      b[i] = 4;
+      c[i] = 1;
       r[i] = 4 * points[i] + 2 * points[i + 1];
     }
+
+    a[n - 1] = 2;
+    b[n - 1] = 7;
+    c[n - 1] = 0;
     r[n - 1] = 8 * points[n - 1] + points[n];
 
     // Apply the tridiagonal matrix algorithm (Thomas Algorithm) to solve the linear system
