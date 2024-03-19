@@ -82,38 +82,42 @@ class _CurveExtrapolationVisualizationState
               color: Colors.grey,
               height: MediaQuery.of(context).size.height * 0.3,
               width: MediaQuery.of(context).size.width,
-              child: GestureDetector(
-                onPanUpdate: (details) {
-                  Offset tapPosition = details.localPosition;
-                  tapPosition = Offset(
-                    tapPosition.dx
-                        .clamp(0.0, MediaQuery.of(context).size.width - 32),
-                    tapPosition.dy
-                        .clamp(0.0, MediaQuery.of(context).size.height * 0.3),
-                  );
-                  Node toMove = nodes[selectedNodeIndex];
-                  toMove.updatePosition(tapPosition.dx, tapPosition.dy);
-                  setState(() {});
-                },
-                child: CanvasTouchDetector(
-                  gesturesToOverride: const [
-                    GestureType.onTapDown,
-                    GestureType.onTapUp,
-                  ],
-                  builder: (touchyCtx) => CustomPaint(
-                    painter: BeizerSplinePainter(
-                      touchyCtx,
-                      nodes: nodes,
-                      nodeselectionChanged: (index) {
-                        setState(() {
-                          selectedNodeIndex = index;
-                        });
-                      },
-                      proofBallAnimation: _proofBallAnimation,
-                      pointsOnCurve: proofPositions,
-                      proofPositionUpdate: (pos) {
-                        proofPositions.add(pos);
-                      },
+              child: AbsorbPointer(
+                absorbing: _proofBallAnimationController.isAnimating ||
+                    proofPositions.isNotEmpty,
+                child: GestureDetector(
+                  onPanUpdate: (details) {
+                    Offset tapPosition = details.localPosition;
+                    tapPosition = Offset(
+                      tapPosition.dx
+                          .clamp(0.0, MediaQuery.of(context).size.width - 32),
+                      tapPosition.dy
+                          .clamp(0.0, MediaQuery.of(context).size.height * 0.3),
+                    );
+                    Node toMove = nodes[selectedNodeIndex];
+                    toMove.updatePosition(tapPosition.dx, tapPosition.dy);
+                    setState(() {});
+                  },
+                  child: CanvasTouchDetector(
+                    gesturesToOverride: const [
+                      GestureType.onTapDown,
+                      GestureType.onTapUp,
+                    ],
+                    builder: (touchyCtx) => CustomPaint(
+                      painter: BeizerSplinePainter(
+                        touchyCtx,
+                        nodes: nodes,
+                        nodeselectionChanged: (index) {
+                          setState(() {
+                            selectedNodeIndex = index;
+                          });
+                        },
+                        proofBallAnimation: _proofBallAnimation,
+                        pointsOnCurve: proofPositions,
+                        proofPositionUpdate: (pos) {
+                          proofPositions.add(pos);
+                        },
+                      ),
                     ),
                   ),
                 ),
@@ -122,16 +126,33 @@ class _CurveExtrapolationVisualizationState
             Padding(
               padding: const EdgeInsets.only(top: 16.0),
               child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: WrapAlignment.center,
                 children: [
                   OutlinedButton(
                     onPressed: _proofBallAnimationController.isAnimating
                         ? null
                         : () {
+                            setState(() {
+                              proofPositions.clear();
+                            });
                             proofPositions.clear();
                             _proofBallAnimationController.forward();
                           },
-                    child: const Text("Animate Proof Ball"),
-                  )
+                    child: const Text("Animate Proof Balls"),
+                  ),
+                  _proofBallAnimationController.isDismissed &&
+                          proofPositions.isNotEmpty
+                      ? OutlinedButton(
+                          onPressed: () {
+                            setState(() {
+                              proofPositions.clear();
+                            });
+                          },
+                          child: const Text("Reset Proof Balls"),
+                        )
+                      : const SizedBox.shrink()
                 ],
               ),
             )
