@@ -74,6 +74,16 @@ class BeizerSplinePainter extends CustomPainter {
           nodeselectionChanged(i);
         },
       );
+      final textSpan = TextSpan(
+        text: "${i + 1}",
+      );
+      final textPainter = TextPainter(
+        text: textSpan,
+        textDirection: TextDirection.ltr,
+      );
+      textPainter.layout();
+
+      textPainter.paint(canvas, currentNode.position.translate(-5, 10));
       x.add(currentNode.position.dx);
       y.add(currentNode.position.dy);
     }
