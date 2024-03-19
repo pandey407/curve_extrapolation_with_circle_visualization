@@ -1,68 +1,96 @@
+import 'package:curve_extrapolation_with_circle_visualization/node/node.dart';
+import 'package:curve_extrapolation_with_circle_visualization/painters/beizer_spline_painter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:touchable/touchable.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const AppLauncher());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class AppLauncher extends StatelessWidget {
+  const AppLauncher({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+    return const MaterialApp(
+      title: 'Curve Extrapolation and Circle Visualizatio',
+      home: CurveExtrapolationVisualization(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
+class CurveExtrapolationVisualization extends StatefulWidget {
+  const CurveExtrapolationVisualization({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<CurveExtrapolationVisualization> createState() =>
+      _CurveExtrapolationVisualizationState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _CurveExtrapolationVisualizationState
+    extends State<CurveExtrapolationVisualization> {
+  late List<Node> nodes;
+  int selectedNodeIndex = 0;
 
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
+  @override
+  void initState() {
+    super.initState();
+    nodes = List.generate(
+      5,
+      (index) => Node(
+        Offset(40 + (index + 1) * 20, 30 + (index + 1) * 10),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
-      body: Center(
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+          children: [
+            Container(
+              color: Colors.grey,
+              height: MediaQuery.of(context).size.height * 0.3,
+              width: MediaQuery.of(context).size.width,
+              child: GestureDetector(
+                onPanUpdate: (details) {
+                  Offset tapPosition = details.localPosition;
+                  tapPosition = Offset(
+                    tapPosition.dx
+                        .clamp(0.0, MediaQuery.of(context).size.width - 32),
+                    tapPosition.dy
+                        .clamp(0.0, MediaQuery.of(context).size.height * 0.3),
+                  );
+                  Node toMove = nodes[selectedNodeIndex];
+                  toMove.updatePosition(tapPosition.dx, tapPosition.dy);
+                  setState(() {});
+                },
+                child: CanvasTouchDetector(
+                  gesturesToOverride: const [
+                    GestureType.onTapDown,
+                    GestureType.onTapUp,
+                  ],
+                  builder: (touchyCtx) => CustomPaint(
+                    painter: BeizerSplinePainter(
+                      touchyCtx,
+                      nodes: nodes,
+                      nodeselectionChanged: (index) {
+                        setState(() {
+                          selectedNodeIndex = index;
+                        });
+                      },
+                    ),
+                  ),
+                ),
+              ),
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
       ),
     );
   }
