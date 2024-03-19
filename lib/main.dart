@@ -1,7 +1,6 @@
 import 'package:curve_extrapolation_with_circle_visualization/node/node.dart';
 import 'package:curve_extrapolation_with_circle_visualization/painters/beizer_spline_painter.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:touchable/touchable.dart';
 
 void main() {
