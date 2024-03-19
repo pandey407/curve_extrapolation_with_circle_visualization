@@ -29,19 +29,44 @@ class CurveExtrapolationVisualization extends StatefulWidget {
 }
 
 class _CurveExtrapolationVisualizationState
-    extends State<CurveExtrapolationVisualization> {
+    extends State<CurveExtrapolationVisualization>
+    with SingleTickerProviderStateMixin {
   late List<Node> nodes;
   int selectedNodeIndex = 0;
 
+  late AnimationController _proofBallAnimationController;
+  late Animation<double> _proofBallAnimation;
   @override
   void initState() {
     super.initState();
+    _proofBallAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(
+        milliseconds: 3000,
+      ),
+    )..addListener(() {
+        if (_proofBallAnimationController.isCompleted) {
+          _proofBallAnimationController.reset();
+        }
+      });
+
+    _proofBallAnimation = Tween<double>(begin: 0.0, end: 1.0)
+        .animate(_proofBallAnimationController)
+      ..addListener(() {
+        setState(() {});
+      });
     nodes = List.generate(
       5,
       (index) => Node(
         Offset(40 + (index + 1) * 20, 30 + (index + 1) * 10),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _proofBallAnimationController.dispose();
   }
 
   @override
@@ -83,11 +108,26 @@ class _CurveExtrapolationVisualizationState
                           selectedNodeIndex = index;
                         });
                       },
+                      proofBallAnimation: _proofBallAnimation,
                     ),
                   ),
                 ),
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.only(top: 16.0),
+              child: Wrap(
+                children: [
+                  OutlinedButton(
+                    onPressed: () {
+                      if (_proofBallAnimationController.isAnimating) return;
+                      _proofBallAnimationController.forward();
+                    },
+                    child: const Text("Animate Proof Ball"),
+                  )
+                ],
+              ),
+            )
           ],
         ),
       ),

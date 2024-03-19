@@ -1,4 +1,5 @@
 import 'package:curve_extrapolation_with_circle_visualization/node/node.dart';
+import 'package:curve_extrapolation_with_circle_visualization/utils/path_ext.dart';
 import 'package:flutter/material.dart';
 import 'package:proste_bezier_curve/proste_bezier_curve.dart';
 import 'package:touchable/touchable.dart';
@@ -6,13 +7,15 @@ import 'package:touchable/touchable.dart';
 class BeizerSplinePainter extends CustomPainter {
   final BuildContext context;
   final List<Node> nodes;
-
   final void Function(int) nodeselectionChanged;
+
+  final Animation<double> proofBallAnimation;
 
   BeizerSplinePainter(
     this.context, {
     required this.nodes,
     required this.nodeselectionChanged,
+    required this.proofBallAnimation,
   });
 
   @override
@@ -34,6 +37,7 @@ class BeizerSplinePainter extends CustomPainter {
       ..strokeWidth = 2.0
       ..blendMode = BlendMode.screen
       ..strokeCap = StrokeCap.round;
+    var animatingProofBall = Paint()..color = Colors.orange.shade700;
 
     canvas.drawRect(rect, boundingBox);
 
@@ -83,6 +87,15 @@ class BeizerSplinePainter extends CustomPainter {
       path.cubicTo(dots.x1, dots.y1, dots.x2, dots.y2, dots.x3, dots.y3);
     }
     canvas.drawPath(path, curve);
+    if (proofBallAnimation.status == AnimationStatus.forward) {
+      final proofPosition =
+          path.offsetAtProgress(progress: proofBallAnimation.value);
+      canvas.drawCircle(
+        proofPosition,
+        10,
+        animatingProofBall,
+      );
+    }
   }
 
   @override
